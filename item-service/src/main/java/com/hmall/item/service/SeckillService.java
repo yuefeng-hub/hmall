@@ -14,8 +14,11 @@ public interface SeckillService extends IService<SeckillActivity> {
     /** 当前场次信息：第几场、几点到几点、还剩多少秒 */
     SeckillRoundDTO currentRound();
 
-    /** 本场进行中的秒杀活动列表（首页秒杀楼层用），带商品展示字段与已抢进度 */
-    List<SeckillActivityDTO> listActive();
+    /**
+     * 本场进行中的秒杀活动列表（首页秒杀楼层用）。
+     * 带上 {@code userId} 才能标出「本场我已经抢到哪几件」，否则按钮永远是「马上抢」。
+     */
+    List<SeckillActivityDTO> listActive(Long userId);
 
     /** 单个秒杀活动详情（抢购页用），带当前用户本轮是否已抢过 */
     SeckillActivityDTO detail(Long activityId, Long userId);

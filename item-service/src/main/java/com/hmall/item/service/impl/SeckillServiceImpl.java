@@ -34,8 +34,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,7 +138,7 @@ public class SeckillServiceImpl extends ServiceImpl<SeckillActivityMapper, Secki
     // ==================== 查询 ====================
 
     @Override
-    public List<SeckillActivityDTO> listActive() {
+    public List<SeckillActivityDTO> listActive(Long userId) {
         int groupNo = groupOf(roundNo());
         List<SeckillActivity> acts = lambdaQuery()
                 .eq(SeckillActivity::getStatus, 1)
@@ -152,8 +154,22 @@ public class SeckillServiceImpl extends ServiceImpl<SeckillActivityMapper, Secki
         LocalDateTime start = roundStart();
         LocalDateTime end = start.plusMinutes(roundMinutes);
         long roundNo = roundNo();
+
+        // 本轮我已经抢到的活动 id：列表接口不传这个的话，前端按钮永远显示「马上抢」
+        Set<Long> grabbedIds = new HashSet<>();
+        if (userId != null) {
+            List<SeckillOrder> mine = seckillOrderMapper.selectList(Wrappers.<SeckillOrder>lambdaQuery()
+                    .eq(SeckillOrder::getUserId, userId)
+                    .eq(SeckillOrder::getRoundNo, roundNo)
+                    .in(SeckillOrder::getActivityId,
+                            acts.stream().map(SeckillActivity::getId).collect(Collectors.toList())));
+            for (SeckillOrder so : mine) {
+                grabbedIds.add(so.getActivityId());
+            }
+        }
+
         return acts.stream()
-                .map(a -> toDTO(a, itemMap.get(a.getItemId()), null, roundNo, start, end))
+                .map(a -> toDTO(a, itemMap.get(a.getItemId()), grabbedIds.contains(a.getId()), roundNo, start, end))
                 .collect(Collectors.toList());
     }
 

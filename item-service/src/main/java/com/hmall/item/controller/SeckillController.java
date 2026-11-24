@@ -26,10 +26,11 @@ public class SeckillController {
         return seckillService.currentRound();
     }
 
-    @Operation(summary = "本场秒杀活动列表（首页秒杀楼层，按场次自动轮换）")
+    @Operation(summary = "本场秒杀活动列表（首页秒杀楼层，按场次自动轮换，带本轮是否已抢）")
     @GetMapping("/list")
-    public List<SeckillActivityDTO> listActive() {
-        return seckillService.listActive();
+    public List<SeckillActivityDTO> listActive(
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+        return seckillService.listActive(userId);
     }
 
     @Operation(summary = "秒杀活动详情（含本轮是否已抢过）")
