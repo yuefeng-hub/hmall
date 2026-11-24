@@ -1,0 +1,47 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: item-service
+  datasource:
+    driver-class-name: org.h2.Driver
+    # 文件库：关掉服务再重启，商品/库存/订单/余额都还在（默认是内存库，重启即丢）
+    # 想回到「每次启动都重置」的干净状态，删掉 data 目录即可，见 scripts/reset-data.sh
+    # LOCK_TIMEOUT=10000：秒杀并发扣库存时，H2 默认 2 秒行锁超时太短，会被压测打爆；
+    #   加到 10 秒让并发事务排队等待而不是直接抛 Concurrent update
+    url: jdbc:h2:file:${hmall.data.dir:./data}/hm_item;MODE=MySQL;DATABASE_TO_LOWER=TRUE;LOCK_TIMEOUT=10000
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql,classpath:seckill-data.sql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  cloud:
+    nacos:
+      discovery:
+        enabled: false          # 默认单机模式不连 Nacos，启动 nacos profile 时打开
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.hmall: info
+
+hmall:
+  remote:
+    # 秒杀抢购成功后回调 order-service 建普通订单
+    order-url: http://localhost:8083

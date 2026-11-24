@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/hm_pay?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:123}
+  sql:
+    init:
+      mode: never
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: ${NACOS_ADDR:192.168.101.200:8848}
+        fail-fast: false        # Nacos 短暂不可用时先启动，恢复后自动重新注册
+
+hmall:
+  remote:
+    order-url: http://order-service
+    user-url: http://user-service

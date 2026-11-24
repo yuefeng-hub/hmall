@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.18</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.hmall</groupId>
+    <artifactId>hmall</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>hmall</name>
+    <description>黑马商城微服务版（服务拆分 + 服务治理）</description>
+
+    <modules>
+        <module>hm-common</module>
+        <module>item-service</module>
+        <module>cart-service</module>
+        <module>order-service</module>
+        <module>pay-service</module>
+        <module>user-service</module>
+    </modules>
+
+    <properties>
+        <java.version>11</java.version>
+        <!-- 覆盖 Spring Boot 2.7 默认的 1.18.30：旧版 Lombok 在 JDK 22+ 上会报
+             ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN -->
+        <lombok.version>1.18.48</lombok.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
+        <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
+        <mybatis-plus.version>3.5.3.2</mybatis-plus.version>
+        <springdoc.version>1.6.15</springdoc.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hmall</groupId>
+                <artifactId>hm-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- JDK 23 起 javac 默认不再执行 classpath 上的注解处理器，
+                     必须用 annotationProcessorPaths 显式声明，否则 Lombok 不生效 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <release>${java.version}</release>
+                        <proc>full</proc>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

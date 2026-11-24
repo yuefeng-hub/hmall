@@ -1,0 +1,17 @@
+target/
+logs/
+*.log
+.idea/
+*.iml
+.DS_Store
+# H2 文件库（运行时数据，别提交）
+data/
+data-*/
+# 本地私有配置：QQ 邮箱授权码等敏感信息，别提交
+**/application-local.yml
+# 工具工作目录：Chrome 用户数据、预览截图、AI 生成源图、记忆文件都太大或太私有
+.workbuddy/*
+# 但浏览器验证脚本要留，它们是可复现的回归用例
+!.workbuddy/e2e/
+.workbuddy/e2e/*
+!.workbuddy/e2e/*.js

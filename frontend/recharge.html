@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>账户充值 · 黑马商城</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="recharge-wrap">
+  <div class="recharge-head">
+    <div class="brand">黑马商城 <span class="brand-sub">账户充值</span></div>
+    <div class="head-actions">
+      <span class="user-chip">
+        <i class="avatar" id="avatar">–</i>
+        <span id="username">--</span>
+      </span>
+      <a class="btn small" href="index.html">返回商城</a>
+    </div>
+  </div>
+
+  <div class="recharge-card">
+    <!-- 余额 -->
+    <div class="balance-panel">
+      <div>
+        <div class="label">当前可用余额</div>
+        <div class="amount"><span id="balance">--</span><small>元</small></div>
+      </div>
+      <div class="balance-tip">充值实时到账<br>可立即用于下单支付</div>
+    </div>
+
+    <!-- 金额 -->
+    <div class="section-title">
+      <span>充值金额</span>
+      <span class="section-extra" id="amountTip">单笔 0.01 ~ 50000 元</span>
+    </div>
+
+    <div class="amount-grid" id="amountGrid">
+      <button type="button" class="amount-opt" data-amount="50">50<small>元</small></button>
+      <button type="button" class="amount-opt" data-amount="100">100<small>元</small></button>
+      <button type="button" class="amount-opt" data-amount="200">200<small>元</small></button>
+      <button type="button" class="amount-opt" data-amount="500">500<small>元</small></button>
+      <button type="button" class="amount-opt" data-amount="1000">1000<small>元</small></button>
+      <button type="button" class="amount-opt" data-amount="2000">2000<small>元</small></button>
+    </div>
+
+    <div class="custom-amount">
+      <span class="prefix">其他金额</span>
+      <input id="customAmount" type="number" min="0.01" max="50000" step="0.01" placeholder="手动输入金额">
+      <span class="unit">元</span>
+    </div>
+
+    <!-- 渠道 -->
+    <div class="section-title"><span>支付方式</span></div>
+    <div class="channels" id="channels">
+      <label class="channel active" data-channel="alipay">
+        <span class="dot"></span><span>支付宝</span>
+      </label>
+      <label class="channel" data-channel="wechat">
+        <span class="dot"></span><span>微信支付</span>
+      </label>
+      <label class="channel" data-channel="bank">
+        <span class="dot"></span><span>银行卡</span>
+      </label>
+    </div>
+
+    <button type="button" class="btn primary block" id="payBtn" disabled>请选择充值金额</button>
+    <div class="hint center">演示环境，点击后直接调用用户服务加余额，不会真实扣款</div>
+
+    <!-- 最近充值 -->
+    <div class="record-block">
+      <div class="section-title"><span>最近充值记录</span><span class="section-extra" id="recordCount"></span></div>
+      <div class="record-list" id="recordList">
+        <div class="empty small">还没有充值记录</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 充值成功弹窗 -->
+<div id="modal" class="modal-mask hidden">
+  <div class="modal">
+    <div class="success-icon">成功</div>
+    <h3 class="center">充值成功</h3>
+    <div class="sum-line"><span>充值金额</span><span>¥<b id="okAmount">0.00</b></span></div>
+    <div class="sum-line"><span>支付方式</span><span id="okChannel">--</span></div>
+    <div class="sum-line"><span>充值流水号</span><span id="okNo">--</span></div>
+    <div class="sum-line total"><span>当前余额</span><span>¥<b id="okBalance">0.00</b></span></div>
+    <div class="modal-actions">
+      <button class="btn" id="okBack">返回商城</button>
+      <button class="btn primary" id="okAgain">继续充值</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="session.js"></script>
+<script src="recharge.js"></script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑马商城 · 正品低价、品质保障</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ==================== 顶部工具条 ==================== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="tb-left">
+      <span class="tb-loc">广东</span>
+      <i class="tb-sep"></i>
+      <span class="tb-hi">你好，<b id="tbUser">请登录</b></span>
+      <a class="tb-accent" id="tbAuthLink" href="login.html">登录 / 注册</a>
+    </div>
+    <div class="tb-right">
+      <button class="tb-link" data-nav="orders">我的订单</button>
+      <i class="tb-sep"></i>
+      <button class="tb-link" data-nav="recharge">我的钱包</button>
+      <i class="tb-sep"></i>
+      <button class="tb-link" id="logoutBtn">退出登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 主导航：LOGO + 搜索 + 购物车 ==================== -->
+<div class="site-head">
+  <div class="head-inner">
+    <a class="logo" href="javascript:;" data-nav="shop">
+      黑马商城<span class="logo-sub">H·MALL</span>
+    </a>
+
+    <div class="search">
+      <div class="search-box">
+        <input id="searchInput" type="text" autocomplete="off"
+               placeholder="搜索商品，如 手机 / 耳机 / 华为 / 空调">
+        <button id="searchBtn" class="search-btn">搜 索</button>
+      </div>
+      <div class="hotwords">
+        <span class="hot-label">热门搜索：</span>
+        <button data-kw="手机">手机</button>
+        <button data-kw="耳机">耳机</button>
+        <button data-kw="笔记本">笔记本</button>
+        <button data-kw="空调">空调</button>
+        <button data-kw="手表">手表</button>
+        <button data-kw="充电宝">充电宝</button>
+      </div>
+    </div>
+
+    <button class="cart-entry" data-nav="cart">
+      <i class="cart-ico">&#128722;</i>
+      <span>我的购物车</span>
+      <em id="cartBadge" class="cart-badge hidden">0</em>
+    </button>
+  </div>
+</div>
+
+<main class="page">
+  <!-- ==================== 商品页 ==================== -->
+  <section id="view-shop" class="view active">
+
+    <div class="hero">
+      <!-- 左侧分类导航 -->
+      <aside class="cats">
+        <div class="cats-title">全部商品分类</div>
+        <ul id="catList" class="cat-list"></ul>
+      </aside>
+
+      <!-- 中间主视觉 -->
+      <div class="hero-mid">
+        <div class="slider" id="slider">
+          <div class="slide s1 active">
+            <div class="slide-txt">
+              <h2>数码好物节</h2>
+              <p>手机 · 电脑 · 影音 全场现货</p>
+              <span class="slide-tag">5 个微服务真实链路下单</span>
+            </div>
+          </div>
+          <div class="slide s2">
+            <div class="slide-txt">
+              <h2>新人礼金 500 元</h2>
+              <p>邮箱验证码注册即送，直接下单</p>
+              <span class="slide-tag">注册 → 下单 → 支付 一步到位</span>
+            </div>
+          </div>
+          <div class="slide s3">
+            <div class="slide-txt">
+              <h2>家电焕新季</h2>
+              <p>空调 · 冰箱 · 洗衣机 一级能效</p>
+              <span class="slide-tag">以旧换新 · 送装一体</span>
+            </div>
+          </div>
+          <div class="slider-dots" id="sliderDots"></div>
+        </div>
+
+        <div class="hero-sub">
+          <button class="sub-item" data-cat="手机通讯"><b>手机通讯</b><span>新品直降</span></button>
+          <button class="sub-item" data-cat="电脑办公"><b>电脑办公</b><span>办公首选</span></button>
+          <button class="sub-item" data-cat="家用电器"><b>家用电器</b><span>一级能效</span></button>
+          <button class="sub-item" data-cat="影音娱乐"><b>影音娱乐</b><span>沉浸体验</span></button>
+        </div>
+      </div>
+
+      <!-- 右侧用户卡 -->
+      <aside class="user-card">
+        <div class="uc-top">
+          <i class="avatar" id="avatar">–</i>
+          <div class="uc-id">
+            <div class="uc-name" id="username">--</div>
+            <div class="uc-tip">欢迎回到黑马商城</div>
+          </div>
+        </div>
+        <div class="uc-balance">
+          <span>账户余额</span>
+          <div><b id="balance">--</b><small>元</small></div>
+        </div>
+        <div class="uc-actions">
+          <button class="btn small primary" id="rechargeBtn">充值</button>
+          <button class="btn small" data-nav="orders">我的订单</button>
+        </div>
+        <ul class="uc-service">
+          <li><i>&#128666;</i> 极速配送 · 次日达</li>
+          <li><i>&#128737;</i> 正品保障 · 假一赔十</li>
+          <li><i>&#128295;</i> 7 天无理由退货</li>
+        </ul>
+      </aside>
+    </div>
+
+    <!-- 秒杀楼层 -->
+    <section class="floor seckill-floor">
+      <div class="floor-head">
+        <h2><i class="sk-ico">&#9889;</i>限时秒杀</h2>
+        <div class="sk-countdown">
+          <span class="sk-cd-tip">距本场结束</span>
+          <span class="sk-cd-box" id="skCd">--:--:--</span>
+        </div>
+        <span class="floor-tip" id="skTip">手慢无 · 每人限购一件</span>
+      </div>
+      <div id="seckillGrid" class="goods-grid sk-grid"></div>
+      <div id="skEmpty" class="empty hidden">当前暂无进行中的秒杀活动</div>
+    </section>
+
+    <!-- 推荐楼层 -->
+    <section class="floor">
+      <div class="floor-head">
+        <h2>为你推荐</h2>
+        <span class="floor-tip" id="resultTip">全场好物</span>
+      </div>
+      <div id="productGrid" class="goods-grid"></div>
+      <div id="shopEmpty" class="empty hidden">没有找到相关商品，换个关键词试试</div>
+    </section>
+  </section>
+
+  <!-- ==================== 购物车页 ==================== -->
+  <section id="view-cart" class="view">
+    <div class="page-head">
+      <h2>我的购物车</h2>
+      <a href="javascript:;" data-nav="shop" class="back-link">继续购物 &gt;</a>
+    </div>
+    <div id="cartList" class="cart-list"></div>
+    <div id="cartFooter" class="cart-footer hidden">
+      <div class="cart-sum">合计（不含运费）：<b id="cartTotal">0.00</b> 元</div>
+      <button id="checkoutBtn" class="btn primary">去结算</button>
+    </div>
+  </section>
+
+  <!-- ==================== 订单页 ==================== -->
+  <section id="view-orders" class="view">
+    <div class="page-head">
+      <h2>我的订单</h2>
+      <a href="javascript:;" data-nav="shop" class="back-link">继续购物 &gt;</a>
+    </div>
+    <div id="orderList" class="order-list"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-inner">
+    <div class="foot-links">
+      <span>关于我们</span><span>联系我们</span><span>商家入驻</span><span>售后服务</span><span>隐私政策</span>
+    </div>
+    <p class="foot-note">黑马商城 hmall · Spring Cloud 微服务演示项目 · 商品 8081 / 购物车 8082 / 订单 8083 / 支付 8084 / 用户 8085</p>
+  </div>
+</footer>
+
+<!-- 结算弹窗 -->
+<div id="modal" class="modal-mask hidden">
+  <div class="modal">
+    <h3 id="modalTitle">确认订单</h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn primary" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="session.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

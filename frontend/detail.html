@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品详情 · 黑马商城</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ==================== 顶部工具条 ==================== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="tb-left">
+      <span class="tb-loc">广东</span>
+      <i class="tb-sep"></i>
+      <span class="tb-hi">你好，<b id="tbUser">请登录</b></span>
+      <a class="tb-accent" id="tbAuthLink" href="login.html">登录 / 注册</a>
+    </div>
+    <div class="tb-right">
+      <button class="tb-link" data-nav="orders">我的订单</button>
+      <i class="tb-sep"></i>
+      <button class="tb-link" data-nav="recharge">我的钱包</button>
+      <i class="tb-sep"></i>
+      <button class="tb-link" id="logoutBtn">退出登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 主导航 ==================== -->
+<div class="site-head">
+  <div class="head-inner">
+    <a class="logo" href="index.html">黑马商城<span class="logo-sub">H·MALL</span></a>
+
+    <div class="search">
+      <div class="search-box">
+        <input id="searchInput" type="text" autocomplete="off" placeholder="搜索商品，如 手机 / 耳机 / 华为 / 空调">
+        <button id="searchBtn" class="search-btn">搜 索</button>
+      </div>
+      <div class="hotwords">
+        <span class="hot-label">热门搜索：</span>
+        <button data-kw="手机">手机</button>
+        <button data-kw="耳机">耳机</button>
+        <button data-kw="笔记本">笔记本</button>
+        <button data-kw="空调">空调</button>
+        <button data-kw="手表">手表</button>
+        <button data-kw="充电宝">充电宝</button>
+      </div>
+    </div>
+
+    <button class="cart-entry" data-nav="cart">
+      <i class="cart-ico">&#128722;</i>
+      <span>我的购物车</span>
+      <em id="cartBadge" class="cart-badge hidden">0</em>
+    </button>
+  </div>
+</div>
+
+<main class="page">
+  <nav class="crumb" id="crumb">
+    <a href="index.html">首页</a>
+    <span class="crumb-sep">&gt;</span>
+    <a id="crumbCat" href="index.html">商品</a>
+    <span class="crumb-sep">&gt;</span>
+    <span id="crumbName">加载中…</span>
+  </nav>
+
+  <!-- 商品主区 -->
+  <div class="detail-main">
+    <div class="detail-gallery">
+      <img id="dPic" alt="商品图">
+      <div class="gallery-tip">图片为演示占位图 · 支持 7 天无理由退货</div>
+    </div>
+
+    <div class="detail-info">
+      <h1 id="dName">加载中…</h1>
+      <p class="d-sub" id="dSub"></p>
+
+      <div class="price-box">
+        <span class="pb-label">京东价</span>
+        <span class="pb-price">¥<b id="dPrice">--</b></span>
+        <span class="pb-tag hidden" id="dTag"></span>
+      </div>
+
+      <ul class="d-meta">
+        <li><span>累计销量</span><em id="dSales">--</em></li>
+        <li><span>商品评价</span><em id="dComments">--</em></li>
+        <li><span>好评率</span><em class="red" id="dRate">--</em></li>
+        <li><span>库存</span><em id="dStock">--</em></li>
+      </ul>
+
+      <div class="d-buy">
+        <div class="qty-row">
+          <span class="qty-label">数量</span>
+          <div class="qty">
+            <button type="button" id="qtyMinus">-</button>
+            <span id="qtyNum">1</span>
+            <button type="button" id="qtyPlus">+</button>
+          </div>
+          <span class="qty-tip" id="qtyTip">单次最多购买库存数量</span>
+        </div>
+
+        <div class="d-actions">
+          <button class="btn primary big" id="addCartBtn">加入购物车</button>
+          <button class="btn big" id="buyNowBtn">立即购买</button>
+        </div>
+      </div>
+
+      <ul class="d-service">
+        <li>正品保障</li>
+        <li>极速配送 · 次日达</li>
+        <li>7 天无理由退货</li>
+        <li>满 99 元包邮</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 规格参数 -->
+  <section class="detail-desc">
+    <h3>规格参数</h3>
+    <table class="spec-table">
+      <tbody>
+        <tr><th>商品名称</th><td id="specName">--</td></tr>
+        <tr><th>品牌</th><td id="specBrand">--</td></tr>
+        <tr><th>所属分类</th><td id="specCat">--</td></tr>
+        <tr><th>核心卖点</th><td id="specSub">--</td></tr>
+        <tr><th>当前库存</th><td id="specStock">--</td></tr>
+        <tr><th>商品编号</th><td id="specId">--</td></tr>
+      </tbody>
+    </table>
+    <p class="desc-note">
+      本页价格、库存、销量等数据均实时取自 item-service（8081），下单时订单服务会再次向商品服务
+      校验价格与库存，前端传入的金额一律不采信。
+    </p>
+  </section>
+
+  <!-- 同类推荐 -->
+  <section class="floor">
+    <div class="floor-head">
+      <h2>同类推荐</h2>
+      <span class="floor-tip" id="similarTip"></span>
+    </div>
+    <div class="goods-grid" id="similar"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-inner">
+    <div class="foot-links">
+      <span>关于我们</span><span>联系我们</span><span>商家入驻</span><span>售后服务</span><span>隐私政策</span>
+    </div>
+    <p class="foot-note">黑马商城 hmall · Spring Cloud 微服务演示项目 · 商品 8081 / 购物车 8082 / 订单 8083 / 支付 8084 / 用户 8085</p>
+  </div>
+</footer>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="session.js"></script>
+<script src="detail.js"></script>
+</body>
+</html>

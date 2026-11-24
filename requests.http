@@ -1,0 +1,129 @@
+### 说明：IDEA HTTP Client 可直接运行本文件；X-User-Id 缺省为 1
+@item = http://localhost:8081
+@cart = http://localhost:8082
+@order = http://localhost:8083
+@pay = http://localhost:8084
+@user = http://localhost:8085
+
+### 1. 批量查询商品
+GET {{item}}/items?ids=1,2
+
+### 1.1 首页商品列表（可加 category / keyword / limit）
+GET {{item}}/items/search?limit=60
+
+### 1.2 按分类筛（六大分类之一）
+GET {{item}}/items/search?category=家用电器
+
+### 1.3 关键词搜索（匹配名称 / 品牌 / 卖点）
+GET {{item}}/items/search?keyword=华为
+
+### 1.4 全部一级分类（左侧导航用）
+GET {{item}}/items/categories
+
+### 2. 加入购物车
+POST {{cart}}/carts
+Content-Type: application/json
+X-User-Id: 1
+
+{"itemId": 1, "num": 1}
+
+### 3. 查询我的购物车（商品信息由 item-service 远程补齐）
+GET {{cart}}/carts
+X-User-Id: 1
+
+### 4. 下单（推荐带数量：金额/明细/扣库存都按 num 算）
+###    旧版 {"itemIds":[1,2]} 仍兼容，每件按 1 处理
+POST {{order}}/orders
+Content-Type: application/json
+X-User-Id: 1
+
+{"address": "广东省深圳市南山区", "items": [{"itemId": 1, "num": 1}, {"itemId": 2, "num": 2}]}
+
+### 5. 查询订单
+GET {{order}}/orders/1
+
+### 5.1 我的订单列表
+GET {{order}}/orders?limit=20
+X-User-Id: 1
+
+### 5.2 取消订单（仅待支付可取消，成功后库存自动回补）
+PUT {{order}}/orders/1/cancel
+X-User-Id: 1
+
+### 6. 创建支付单
+POST {{pay}}/pay-orders
+Content-Type: application/json
+X-User-Id: 1
+
+{"orderId": 1}
+
+### 7. 确认支付（密码 123456）
+PUT {{pay}}/pay-orders?payOrderNo=P202611090000001&pw=123456
+X-User-Id: 1
+
+### 8. 查询用户余额
+GET {{user}}/users/1
+
+### 9. 登录（拿 token）
+# @name login
+POST {{user}}/users/login
+Content-Type: application/json
+
+{"username": "zhangsan", "password": "123456"}
+
+### 10. 用 token 查当前用户
+GET {{user}}/users/me
+X-Token: {{login.response.body.$.token}}
+
+### 11. 充值 500 元（支付宝）
+POST {{user}}/users/recharge
+Content-Type: application/json
+X-User-Id: 1
+
+{"amount": 500, "channel": "alipay"}
+
+### 12. 我的充值记录
+GET {{user}}/users/recharges?limit=10
+X-User-Id: 1
+
+### 13. 退出登录
+POST {{user}}/users/logout
+X-Token: {{login.response.body.$.token}}
+
+### 14. 发注册验证码（purpose 可为 REGISTER / LOGIN）
+#    未配置 QQ SMTP 时返回 degraded=true，验证码只写进 logs/user.log
+POST {{user}}/users/email/code
+Content-Type: application/json
+
+{"email": "zhangsan@hmall.com", "purpose": "REGISTER"}
+
+### 15. 邮箱验证码注册（注册成功直接返回登录态，新用户送 500 元）
+POST {{user}}/users/register
+Content-Type: application/json
+
+{"username": "xiaoming", "password": "abc123", "email": "xiaoming@qq.com", "code": "123456"}
+
+### 16. 邮箱验证码登录
+# @name emaillogin
+POST {{user}}/users/email/login
+Content-Type: application/json
+
+{"email": "xiaoming@qq.com", "code": "123456"}
+
+### 17. 秒杀活动列表（首页秒杀楼层）
+GET {{item}}/seckill/list
+
+### 18. 秒杀活动详情（grabbed=当前用户是否已抢到）
+GET {{item}}/seckill/101
+X-User-Id: 1
+
+### 19. 抢购（防超卖 + 防重复；成功返回 orderId，抢到后拿订单号走支付）
+POST {{item}}/seckill/101/grab
+X-User-Id: 1
+
+### 20. 秒杀下单（item-service 抢购成功后内部回调，按秒杀价结算）
+POST {{order}}/orders/seckill
+X-User-Id: 1
+Content-Type: application/json
+
+{"itemId": 13, "seckillPrice": 999.00, "address": "秒杀订单"}

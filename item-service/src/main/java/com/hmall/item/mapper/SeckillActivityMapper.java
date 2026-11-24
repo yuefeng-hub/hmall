@@ -1,0 +1,24 @@
+package com.hmall.item.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.hmall.item.entity.SeckillActivity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
+
+@Mapper
+public interface SeckillActivityMapper extends BaseMapper<SeckillActivity> {
+
+    /**
+     * 原子扣减秒杀库存：只有「活动进行中且库存 > 0」时才扣，一条 SQL 同时解决超卖与时间窗校验。
+     * 返回 0 表示已售罄 / 活动不在进行中 / 活动不存在。
+     * 这是秒杀防超卖的核心——不先 select 再 update，避免并发下的读后写竞态。
+     */
+    @Update("update seckill_activity set stock = stock - 1 " +
+            "where id = #{activityId} and stock > 0 and status = 1")
+    int deductSeckillStock(@Param("activityId") Long activityId);
+
+    /** 建单失败补偿：把误扣的秒杀库存加回去（纯加法，不会失败） */
+    @Update("update seckill_activity set stock = stock + 1 where id = #{activityId}")
+    int restoreSeckillStock(@Param("activityId") Long activityId);
+}
