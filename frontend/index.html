@@ -130,18 +130,74 @@
       </aside>
     </div>
 
-    <!-- 秒杀楼层 -->
+    <!-- 秒杀楼层：场次由服务端按时间自动轮换，前端只显示「第几场 + 倒计时」 -->
     <section class="floor seckill-floor">
       <div class="floor-head">
         <h2><i class="sk-ico">&#9889;</i>限时秒杀</h2>
+        <div class="sk-round">
+          <span class="sk-round-no" id="skRoundNo">-- 场</span>
+          <span class="sk-round-time" id="skRoundTime">--:-- – --:--</span>
+        </div>
         <div class="sk-countdown">
           <span class="sk-cd-tip">距本场结束</span>
           <span class="sk-cd-box" id="skCd">--:--:--</span>
         </div>
-        <span class="floor-tip" id="skTip">手慢无 · 每人限购一件</span>
+        <span class="floor-tip" id="skTip">每 10 分钟换一场 · 每人每场限购一件</span>
       </div>
       <div id="seckillGrid" class="goods-grid sk-grid"></div>
-      <div id="skEmpty" class="empty hidden">当前暂无进行中的秒杀活动</div>
+      <div id="skEmpty" class="empty hidden">本场暂无秒杀，下一场马上开始</div>
+    </section>
+
+    <!-- 高并发演示：服务端真开线程池打并发，不是前端动画 -->
+    <section class="floor bench-floor">
+      <div class="floor-head">
+        <h2>高并发抢购演示</h2>
+        <span class="floor-tip">走真实的「原子扣库存 + 唯一索引」链路，跑完自动回滚库存</span>
+      </div>
+      <div class="bench">
+        <div class="bench-side">
+          <div class="bench-field">
+            <label>并发线程</label>
+            <div class="bench-seg" id="benchSeg">
+              <button type="button" data-c="50">50</button>
+              <button type="button" data-c="100" class="on">100</button>
+              <button type="button" data-c="200">200</button>
+            </div>
+          </div>
+          <div class="bench-field">
+            <label>压测商品</label>
+            <select id="benchTarget"></select>
+          </div>
+          <div class="bench-actions">
+            <button type="button" class="btn primary" id="benchRun">开始压测</button>
+            <button type="button" class="btn ghost small" id="benchReset">重置本场</button>
+          </div>
+        </div>
+        <div class="bench-main">
+          <div class="bench-metrics">
+            <div class="m"><b id="bmSuccess">--</b><span>抢购成功</span></div>
+            <div class="m"><b id="bmSoldOut">--</b><span>售罄拦截</span></div>
+            <div class="m"><b id="bmDup">--</b><span>重复拦截</span></div>
+            <div class="m"><b id="bmQps">--</b><span>QPS</span></div>
+            <div class="m"><b id="bmElapsed">--</b><span>总耗时 ms</span></div>
+            <div class="m"><b id="bmP95">--</b><span>P95 延迟 ms</span></div>
+          </div>
+          <div class="bench-bar">
+            <i class="ok" id="bmBarOk" style="width:0%"></i>
+            <i class="out" id="bmBarOut" style="width:0%"></i>
+          </div>
+          <div class="bench-legend">
+            <span><i class="dot ok"></i>抢到 <b id="bmLegendOk">0</b></span>
+            <span><i class="dot out"></i>没抢到 <b id="bmLegendOut">0</b></span>
+            <span class="bench-stock" id="bmStock">本场库存 -- / --</span>
+          </div>
+          <div class="bench-msg" id="bmMsg">选好并发数，点「开始压测」看真实战况</div>
+          <p class="bench-note">
+            每个并发都是一个独立虚拟用户，真实走一遍抢购：抢到的件数永远不会超过本场库存，
+            多出来的请求全部落在「售罄」或「重复拦截」上 —— 这就是不超卖的证据。
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- 推荐楼层 -->

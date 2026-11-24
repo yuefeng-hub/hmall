@@ -6,8 +6,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 秒杀活动：一个商品在某时间窗内以秒杀价限量出售。
- * 前端倒计时、抢购按钮、剩余库存都靠这个对象渲染。
+ * 秒杀活动：一个商品在当前场次以秒杀价限量出售。
+ * 前端场次条、倒计时、库存进度条、抢购按钮都靠这个对象渲染。
  */
 @Data
 public class SeckillActivityDTO {
@@ -16,11 +16,19 @@ public class SeckillActivityDTO {
     private Long itemId;
     /** 秒杀价（原价在 item 表里） */
     private BigDecimal seckillPrice;
-    /** 秒杀库存（独立于商品日常库存，扣完即止） */
+    /** 本场剩余库存（独立于商品日常库存，扣完即止） */
     private Integer stock;
-    /** 活动开始时间 */
+    /** 本场初始库存，用来算「已抢 N / 共 M」的进度条 */
+    private Integer initStock;
+    /** 本场已抢出多少件 */
+    private Integer sold;
+    /** 场次分组号 */
+    private Integer slotNo;
+    /** 第几轮（同一批活动每 N 分钟一轮） */
+    private Long roundNo;
+    /** 本场开始时间（服务端按轮次实时算出，不是库里写死的值） */
     private LocalDateTime startTime;
-    /** 活动结束时间 */
+    /** 本场结束时间 */
     private LocalDateTime endTime;
     /** 1 进行中, 0 未开始/已结束/下架 */
     private Integer status;
@@ -33,8 +41,8 @@ public class SeckillActivityDTO {
     private String image;
     private String brand;
     private BigDecimal price;
-    /** 剩余秒杀名额 */
+    /** 剩余秒杀名额（与 stock 同值，保留老前端字段名） */
     private Integer remain;
-    /** 当前用户是否已抢到过（一人一单） */
+    /** 当前用户本轮是否已抢到 */
     private Boolean grabbed;
 }

@@ -168,20 +168,46 @@ function renderProducts() {
   }).join('');
 }
 
-// ===== 秒杀楼层 =====
+// ===== 秒杀楼层：场次自动轮换 + 高并发演示 =====
+let skDeadline = 0;        // 本场结束的时间戳（用服务端的 secondsLeft 推算，不受本地时钟偏差影响）
+let skTimer = null;
+let skRefreshing = false;  // 倒计时归零时防止并发重复拉取
+let benchConcurrency = 100;
+
 async function loadSeckill() {
-  try {
-    state.seckills = await request(API.item, '/seckill/list');
-  } catch (e) {
-    state.seckills = [];
+  const [round, list] = await Promise.all([
+    request(API.item, '/seckill/round').catch(() => null),
+    request(API.item, '/seckill/list').catch(() => [])
+  ]);
+  state.skRound = round;
+  state.seckills = list || [];
+  if (round && typeof round.secondsLeft === 'number') {
+    skDeadline = Date.now() + round.secondsLeft * 1000;
   }
   renderSeckill();
+  renderBenchTargets();
+  startSeckillCountdown();
 }
+
+/** 'yyyy-MM-dd HH:mm:ss' → 'HH:mm' */
+function hhmm(s) { return s ? String(s).slice(11, 16) : '--:--'; }
 
 function renderSeckill() {
   const grid = document.getElementById('seckillGrid');
   const empty = document.getElementById('skEmpty');
   if (!grid) return;
+
+  // 场次条：第几场 / 几点到几点 / 换场节奏
+  const r = state.skRound;
+  if (r) {
+    const no = document.getElementById('skRoundNo');
+    const time = document.getElementById('skRoundTime');
+    const tip = document.getElementById('skTip');
+    if (no) no.textContent = '第 ' + r.roundSeq + ' 场';
+    if (time) time.textContent = hhmm(r.startTime) + ' – ' + hhmm(r.endTime);
+    if (tip) tip.textContent = '每 ' + r.roundMinutes + ' 分钟换一场 · 每人每场限购一件';
+  }
+
   if (!state.seckills.length) {
     grid.innerHTML = '';
     empty.classList.remove('hidden');
@@ -189,13 +215,14 @@ function renderSeckill() {
   }
   empty.classList.add('hidden');
   grid.innerHTML = state.seckills.map(sk => {
-    const soldOut = (sk.remain == null || sk.remain <= 0);
+    const stock = sk.stock == null ? 0 : sk.stock;
+    const init = sk.initStock || stock || 1;
+    const sold = sk.sold == null ? Math.max(0, init - stock) : sk.sold;
+    const pct = Math.min(100, Math.round(sold / init * 100));
+    const soldOut = stock <= 0;
     const done = soldOut || sk.grabbed;
-    const orig = sk.price || sk.seckillPrice;
-    // 剩余库存进度条：剩多少 / 总量。total 用 remain 加已售无法精确得知，这里用 remain 兜底
-    const total = Math.max(sk.remain || 0, 1);
-    const pct = Math.min(100, Math.round((sk.remain || 0) / total * 100));
-    const btnTxt = soldOut ? '已抢光' : (sk.grabbed ? '已抢到' : '马上抢');
+    const orig = sk.price;
+    const btnTxt = soldOut ? '已抢光' : (sk.grabbed ? '本场已抢到' : '马上抢');
     return `
     <div class="gd-card sk-card">
       <div class="gd-pic">
@@ -210,7 +237,7 @@ function renderSeckill() {
         <div class="gd-name" title="${esc(sk.name || '')}">${esc(sk.name || '')}</div>
         <div class="sk-progress">
           <div class="sk-bar"><i style="width:${pct}%"></i></div>
-          <div class="sk-left">已抢 ${total - (sk.remain || 0)} / ${total} 件</div>
+          <div class="sk-left"><span>已抢 <b>${sold}</b> / ${init} 件</span><span>${pct}%</span></div>
         </div>
         <button class="btn primary small sk-grab" data-sk="${sk.id}" ${done ? 'disabled' : ''}>${btnTxt}</button>
       </div>
@@ -240,31 +267,140 @@ document.getElementById('seckillGrid').addEventListener('click', async e => {
   }
 });
 
-// 倒计时：取最近一场活动的结束时间，每秒刷新
-let skTimer = null;
+// 倒计时：用服务端给的 secondsLeft 做基准，本地每秒递减；归零就重新拉场次
 function startSeckillCountdown() {
   clearInterval(skTimer);
   const tick = () => {
     const box = document.getElementById('skCd');
     if (!box) return;
-    const acts = state.seckills || [];
-    if (!acts.length) { box.textContent = '--:--:--'; return; }
-    // 取最早结束的一场
-    const end = acts.map(a => new Date(a.endTime).getTime()).sort((a, b) => a - b)[0];
-    const left = end - Date.now();
+    if (!skDeadline) { box.textContent = '--:--:--'; return; }
+    const left = skDeadline - Date.now();
     if (left <= 0) {
       box.textContent = '00:00:00';
-      loadSeckill();
+      skDeadline = 0;
+      if (!skRefreshing) {
+        skRefreshing = true;
+        loadSeckill().finally(() => { skRefreshing = false; });
+      }
       return;
     }
-    const h = Math.floor(left / 3600000);
-    const m = Math.floor((left % 3600000) / 60000);
-    const s = Math.floor((left % 60000) / 1000);
-    box.textContent = [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
+    const t = Math.floor(left / 1000);
+    box.textContent = [Math.floor(t / 3600), Math.floor((t % 3600) / 60), t % 60]
+      .map(n => String(n).padStart(2, '0')).join(':');
   };
   tick();
   skTimer = setInterval(tick, 1000);
 }
+
+// ===== 高并发演示：选项、目标商品、压测、重置 =====
+function renderBenchTargets() {
+  const sel = document.getElementById('benchTarget');
+  if (!sel) return;
+  const keep = sel.value;
+  if (!state.seckills.length) {
+    sel.innerHTML = '<option value="">本场暂无商品</option>';
+  } else {
+    sel.innerHTML = state.seckills.map(sk =>
+      `<option value="${sk.id}">${esc((sk.name || '').slice(0, 20))} · 库存 ${sk.stock}</option>`
+    ).join('');
+    if (keep && Array.prototype.some.call(sel.options, o => o.value === keep)) sel.value = keep;
+  }
+  const cur = state.seckills.find(s => String(s.id) === sel.value);
+  const stockBox = document.getElementById('bmStock');
+  if (cur && stockBox) stockBox.textContent = '本场库存 ' + cur.stock + ' / ' + cur.initStock;
+}
+
+/** 把压测结果铺到面板上 */
+function paintBench(r) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const total = r.concurrency || ((r.success || 0) + (r.soldOut || 0) + (r.duplicate || 0) + (r.error || 0)) || 1;
+  const miss = Math.max(0, total - (r.success || 0));
+  set('bmSuccess', r.success);
+  set('bmSoldOut', r.soldOut);
+  set('bmDup', r.duplicate);
+  set('bmQps', r.qps);
+  set('bmElapsed', r.elapsedMs);
+  set('bmP95', r.p95Ms);
+  set('bmLegendOk', r.success);
+  set('bmLegendOut', miss);
+
+  const okW = Math.round((r.success || 0) / total * 100);
+  const barOk = document.getElementById('bmBarOk');
+  const barOut = document.getElementById('bmBarOut');
+  if (barOk) barOk.style.width = okW + '%';
+  if (barOut) barOut.style.width = (100 - okW) + '%';
+
+  const cur = state.seckills.find(s => s.id === r.activityId);
+  const stock = document.getElementById('bmStock');
+  if (stock) stock.textContent = '本场库存 ' + r.stockAfter + ' / ' + (cur ? cur.initStock : '--');
+  const msg = document.getElementById('bmMsg');
+  if (msg) msg.textContent = r.message || '';
+}
+
+async function runBench() {
+  const sel = document.getElementById('benchTarget');
+  const id = Number(sel && sel.value);
+  if (!id) { toast('本场没有可压测的商品', 'error'); return; }
+  const btn = document.getElementById('benchRun');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '压测中…';
+  const msg = document.getElementById('bmMsg');
+  if (msg) msg.textContent = '正在同时发起 ' + benchConcurrency + ' 个抢购请求…';
+  // 先清掉上一次的柱子，避免误读成这次的结果
+  const barOk = document.getElementById('bmBarOk');
+  const barOut = document.getElementById('bmBarOut');
+  if (barOk) barOk.style.width = '0%';
+  if (barOut) barOut.style.width = '0%';
+  try {
+    const res = await request(API.item,
+      '/seckill/' + id + '/bench?concurrency=' + benchConcurrency + '&autoReset=true',
+      { method: 'POST' });
+    paintBench(res);
+    toast('压测完成：' + res.success + ' 件抢到 / ' + res.elapsedMs + ' ms', 'success');
+  } catch (err) {
+    toast(err.message || '压测失败', 'error');
+    if (msg) msg.textContent = err.message || '压测失败';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '开始压测';
+    await loadSeckill();
+  }
+}
+
+async function resetSeckillRound() {
+  const sel = document.getElementById('benchTarget');
+  const id = Number(sel && sel.value);
+  if (!id) return;
+  const btn = document.getElementById('benchReset');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const n = await request(API.item, '/seckill/' + id + '/reset', { method: 'POST' });
+    toast('已重置本场：清掉 ' + n + ' 条抢购记录，库存已还原', 'success');
+    await loadSeckill();
+  } catch (err) {
+    toast(err.message || '重置失败', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+(function bindBench() {
+  const seg = document.getElementById('benchSeg');
+  if (seg) {
+    seg.addEventListener('click', e => {
+      const b = e.target.closest('button[data-c]');
+      if (!b) return;
+      benchConcurrency = Number(b.dataset.c);
+      Array.prototype.forEach.call(seg.children, x => x.classList.toggle('on', x === b));
+    });
+  }
+  const run = document.getElementById('benchRun');
+  if (run) run.addEventListener('click', runBench);
+  const reset = document.getElementById('benchReset');
+  if (reset) reset.addEventListener('click', resetSeckillRound);
+})();
 
 // 委托绑定：商品网格只重建 innerHTML，监听器挂在网格上不会丢
 document.getElementById('productGrid').addEventListener('click', async e => {

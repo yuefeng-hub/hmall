@@ -21,4 +21,11 @@ public interface SeckillActivityMapper extends BaseMapper<SeckillActivity> {
     /** 建单失败补偿：把误扣的秒杀库存加回去（纯加法，不会失败） */
     @Update("update seckill_activity set stock = stock + 1 where id = #{activityId}")
     int restoreSeckillStock(@Param("activityId") Long activityId);
+
+    /**
+     * 重置库存到本场初始值。用赋值而不是加法，重复点「重置」也不会把库存越堆越高。
+     * init_stock = 0 的老数据跳过，否则会把库存直接清成 0。
+     */
+    @Update("update seckill_activity set stock = init_stock where id = #{activityId} and init_stock > 0")
+    int resetStock(@Param("activityId") Long activityId);
 }

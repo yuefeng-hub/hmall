@@ -648,6 +648,10 @@ a { text-decoration: none; color: inherit; }
   .auth-main { grid-template-columns: minmax(0, 1fr); justify-items: center; padding: 14px 0 20px; }
   .auth-main .auth-card { justify-self: center; }
   .auth-hero { display: none; }
+  /* 压测面板：控制区移到指标上方 */
+  .bench { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .bench-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bench-field select { max-width: none; }
 }
 
 @media (max-width: 760px) {
@@ -861,13 +865,101 @@ a.sim-card .gd-name { min-height: 0; }
 .sk-bar {
   height: 8px; background: #ffe3e1; border-radius: 5px; overflow: hidden;
 }
-.sk-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--red), #ff7a6b); border-radius: 5px; }
-.sk-left { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.sk-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--red), #ff7a6b); border-radius: 5px; transition: width .3s; }
+.sk-left {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--ink-3); margin-top: 3px;
+}
+.sk-left b { color: var(--red); font-weight: 600; }
 .sk-grab { width: 100%; margin-top: 6px; }
 .sk-grab:disabled { background: #c9c9c9; border-color: #c9c9c9; color: #fff; }
 
 /* 秒杀价区间提示（"已抢光/已抢过"状态） */
 .sk-done { font-size: 12px; color: var(--ink-3); text-align: center; padding: 6px 0; }
+
+/* ---- 场次条：第 N 场 / 时间段 ---- */
+.sk-round { display: flex; align-items: center; gap: 7px; }
+.sk-round-no {
+  background: var(--red); color: #fff;
+  font-size: 11px; font-weight: 600; line-height: 1;
+  padding: 4px 7px; border-radius: 3px; white-space: nowrap;
+}
+.sk-round-time {
+  font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ============================================================
+   高并发抢购演示
+   ============================================================ */
+.bench-floor { margin-bottom: 16px; }
+.bench {
+  display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 24px;
+  background: #fff; border-radius: 10px; padding: 20px 22px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .04);
+}
+.bench-field { margin-bottom: 14px; }
+.bench-field label {
+  display: block; font-size: 12px; color: var(--ink-3); margin-bottom: 6px;
+}
+.bench-seg {
+  display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+}
+.bench-seg button {
+  border: 0; background: #fff; color: var(--ink-2); cursor: pointer;
+  font-size: 12px; padding: 6px 14px; line-height: 1;
+  border-right: 1px solid var(--line);
+}
+.bench-seg button:last-child { border-right: 0; }
+.bench-seg button:hover { color: var(--red); }
+.bench-seg button.on { background: var(--red); color: #fff; }
+.bench-field select {
+  width: 100%; padding: 7px 8px; font-size: 12px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; background: #fff;
+  max-width: 264px;
+}
+.bench-actions { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.bench-note {
+  font-size: 11.5px; line-height: 1.7; color: var(--ink-3);
+  margin: 8px 0 0; padding-left: 2px;
+}
+
+.bench-main { display: flex; flex-direction: column; justify-content: center; }
+.bench-metrics {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px; margin-bottom: 16px;
+}
+.bench-metrics .m {
+  background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px;
+  padding: 10px 8px; text-align: center;
+}
+.bench-metrics .m b {
+  display: block; font-size: 20px; line-height: 1.2; color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.bench-metrics .m span { display: block; font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+
+.bench-bar {
+  display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: #f0f0f0;
+}
+.bench-bar i { display: block; height: 100%; transition: width .45s ease; }
+.bench-bar i.ok { background: linear-gradient(90deg, var(--red), #ff7a6b); }
+.bench-bar i.out { background: #d8d8d8; }
+
+.bench-legend {
+  display: flex; align-items: center; gap: 16px; margin-top: 10px;
+  font-size: 12px; color: var(--ink-2);
+}
+.bench-legend .dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 5px; vertical-align: 1px;
+}
+.bench-legend .dot.ok { background: var(--red); }
+.bench-legend .dot.out { background: #d8d8d8; }
+.bench-legend b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bench-stock { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+.bench-msg {
+  margin-top: 10px; font-size: 12px; color: var(--ink-2); min-height: 18px;
+}
 
 
 /* ============================================================
@@ -907,6 +999,14 @@ a.sim-card .gd-name { min-height: 0; }
   .seckill-floor .floor-tip { display: none; }
   .sk-countdown { font-size: 11px; gap: 4px; }
   .sk-cd-box { padding: 2px 6px; }
+  .sk-round-time { display: none; }
+  /* 压测面板：单列 + 指标两列 */
+  .bench { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .bench-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bench-metrics .m b { font-size: 17px; }
+  .bench-field select { max-width: none; }
+  .bench-stock { display: none; }
+  .bench-legend { gap: 12px; }
   .hero { grid-template-columns: 1fr; }
   .detail-main { grid-template-columns: 1fr; }
   .d-meta { grid-template-columns: repeat(2, 1fr); gap: 12px 0; }

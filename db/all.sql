@@ -82,35 +82,55 @@ INSERT IGNORE INTO item (id, name, subtitle, price, stock, image, category, bran
 UPDATE item SET image = REPLACE(image, '.svg', '.jpg') WHERE image LIKE '%.svg';
 
 -- ---- 秒杀活动（限时秒杀）----
+-- slot_no：场次分组。服务端按「当前分钟 / round-minutes % group-count」算出当前组，
+--          只取该组活动，场次于是自己滚动轮换，不依赖写死的 start_time/end_time
 CREATE TABLE IF NOT EXISTS seckill_activity (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     item_id       BIGINT        NOT NULL,
     seckill_price DECIMAL(10,2) NOT NULL,
     stock         INT           NOT NULL DEFAULT 0,
+    init_stock    INT           DEFAULT 0,
+    slot_no       INT           DEFAULT 0,
     start_time    DATETIME,
     end_time      DATETIME,
     status        TINYINT       NOT NULL DEFAULT 1,
     title         VARCHAR(128),
     create_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
-    KEY idx_seckill_item (item_id)
+    KEY idx_seckill_item (item_id),
+    KEY idx_seckill_slot (slot_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 唯一键含 round_no：(activity_id, user_id, round_no) = 一人一轮一单，下一轮可以再抢
 CREATE TABLE IF NOT EXISTS seckill_order (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     activity_id BIGINT  NOT NULL,
     user_id     BIGINT  NOT NULL,
+    round_no    BIGINT  DEFAULT 0,
     order_id    BIGINT,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_seckill_user (activity_id, user_id)
+    UNIQUE KEY uk_seckill_round (activity_id, user_id, round_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO seckill_activity (id, item_id, seckill_price, stock, start_time, end_time, status, title)
+-- 老版本那 5 条活动（101-105）已过期，下架
+UPDATE seckill_activity SET status = 0 WHERE id BETWEEN 101 AND 105;
+
+-- 3 组 × 3 商品，每 10 分钟换一组（round-minutes / group-count 见 application.yml）
+INSERT IGNORE INTO seckill_activity (id, item_id, seckill_price, stock, init_stock, slot_no, status, title)
 VALUES
-  (101, 13, 999.00, 50,  CURDATE(), CURDATE() + INTERVAL 1 DAY, 1, 'Redmi K70 秒杀 · 5 折限量'),
-  (102, 2,  299.00, 30,  CURDATE(), CURDATE() + INTERVAL 1 DAY, 1, '华为 FreeBuds Pro 3 半价秒杀'),
-  (103, 29, 1399.00, 20, CURDATE(), CURDATE() + INTERVAL 1 DAY, 1, '小米电视 S Pro 65 英寸秒杀'),
-  (104, 9,  649.00, 40,  CURDATE(), CURDATE() + INTERVAL 1 DAY, 1, '华为 WATCH GT4 秒杀'),
-  (105, 6,  39.00,  100, CURDATE(), CURDATE() + INTERVAL 1 DAY, 1, '绿联笔记本支架秒杀');
+  -- 组 0：手机 · 影音
+  (201, 13, 999.00,  50,  50,  0, 1, 'Redmi K70 旗舰秒杀'),
+  (202, 2,  199.00,  80,  80,  0, 1, '华为 FreeBuds Pro 3 半价'),
+  (203, 39, 899.00,  40,  40,  0, 1, 'AirPods Pro 2 直降一千'),
+  -- 组 1：办公 · 数码
+  (204, 4,  749.00,  35,  35,  1, 1, 'AOC 27 英寸 2K 电竞屏'),
+  (205, 20, 4299.00, 15,  15,  1, 1, '华为 MateBook 14 Ultra'),
+  (206, 6,  39.00,   120, 120, 1, 1, '绿联铝合金支架 3 折'),
+  -- 组 2：家电 · 穿戴
+  (207, 29, 1399.00, 25,  25,  2, 1, '小米电视 S Pro 65 英寸'),
+  (208, 9,  649.00,  45,  45,  2, 1, '华为 WATCH GT4 五折'),
+  (209, 28, 1999.00, 12,  12,  2, 1, '戴森 V12 无线吸尘器');
+
+UPDATE seckill_activity SET init_stock = stock WHERE init_stock IS NULL OR init_stock = 0;
 
 -- ============ hm_cart ============
 USE hm_cart;

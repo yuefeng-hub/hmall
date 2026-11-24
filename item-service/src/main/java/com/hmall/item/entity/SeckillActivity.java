@@ -9,8 +9,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 秒杀活动：一个商品在某时间窗内以秒杀价限量出售。
- * 秒杀库存独立于商品日常库存，扣完即止。
+ * 秒杀活动：一个商品以秒杀价限量出售。秒杀库存独立于商品日常库存，扣完即止。
+ *
+ * <p>「什么时候开抢」不再看 startTime/endTime，而是看 {@code slotNo}：
+ * 服务端按「当前分钟 / 每场分钟数 % 组数」算出当前该开哪一组，只取这一组的活动。
+ * 于是场次会自动一轮一轮往下转，服务放多久再开都有进行中的场次。
  */
 @Data
 @TableName("seckill_activity")
@@ -22,9 +25,14 @@ public class SeckillActivity {
     private BigDecimal seckillPrice;
     /** 秒杀库存，原子扣减，扣到 0 即售罄 */
     private Integer stock;
+    /** 本场初始库存：算「已抢 N / 共 M」和进度条，重置本场时也回到这个值 */
+    private Integer initStock;
+    /** 场次分组号 0..组数-1，同组同时开抢 */
+    private Integer slotNo;
+    /** 保留字段：开抢时间由服务端按场次实时算，不再作为判定依据 */
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    /** 1 进行中, 0 已下架/结束 */
+    /** 1 上架, 0 下架 */
     private Integer status;
     /** 活动标题 */
     private String title;

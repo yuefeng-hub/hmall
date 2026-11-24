@@ -357,6 +357,30 @@ echo "秒杀库存 ${SK_STOCK} -> ${SK_STOCK_AFTER}（应减 1）"
 DUP_GRAB=$(curl -s --noproxy '*' -X POST "http://localhost:${ITEM}/seckill/${SK_ID}/grab" \
   -H "X-User-Id: ${SK_USER}" -H "Content-Type: application/json")
 echo "$DUP_GRAB"
-echo "$DUP_GRAB" | grep -q "抢过" || { echo "！同一用户重复抢购没被拦截"; exit 1; }
+echo "$DUP_GRAB" | grep -q "已经抢到" || { echo "！同一用户重复抢购没被拦截"; exit 1; }
+
+# 场次轮转：场次由当前时间实时算，不依赖库里写死的时间窗，所以永远有进行中的一场
+ROUND=$(curl -s --noproxy '*' "http://localhost:${ITEM}/seckill/round")
+echo "$ROUND" | python3 -c "
+import sys, json
+r = json.load(sys.stdin)
+print('当前场次 = 第 %s 场, 剩余 %s 秒, 第 %s/%s 组, 本场 %s 件' % (r['roundSeq'], r['secondsLeft'], r['groupNo'], r['groupCount'], r['activityCount']))
+assert r['secondsLeft'] > 0, '本场剩余秒数应大于 0'
+assert r['groupCount'] >= 2, '至少要两组在轮换'
+assert r['activityCount'] >= 1, '本场应有活动'
+"
+
+# 高并发演示：100 个并发真打抢购，抢到的件数不能超过库存（超卖就是致命的）
+BENCH=$(curl -s --noproxy '*' -X POST "http://localhost:${ITEM}/seckill/${SK_ID}/bench?concurrency=100&autoReset=true")
+echo "$BENCH" | python3 -c "
+import sys, json
+b = json.load(sys.stdin)
+print('压测 100 并发: 成功 %s / 售罄 %s / 重复 %s / 异常 %s, %sms, QPS %s' % (b['success'], b['soldOut'], b['duplicate'], b['error'], b['elapsedMs'], b['qps']))
+assert b['success'] <= b['stockBefore'], '抢到的件数不能超过库存（出现超卖）'
+assert b['success'] == min(100, b['stockBefore']), '100 并发应该把库存抢光或抢满 100 件'
+# autoReset 会把库存还原成 init_stock（前面已抢掉的 1 件也会回来），所以是 >= 而不是 ==
+assert b['stockAfter'] >= b['stockBefore'], 'autoReset 后库存不应少于压测前'
+assert b['error'] == 0, '不应出现锁超时等异常'
+"
 
 echo "===== 全部通过 ====="

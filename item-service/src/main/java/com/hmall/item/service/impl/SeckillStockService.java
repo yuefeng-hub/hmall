@@ -36,16 +36,20 @@ public class SeckillStockService {
      * 重复请求会各自把库存扣成功，再插记录时才发现唯一索引冲突，事务回滚把库存
      * 也回滚了，结果一个都没抢到。先插记录则唯一索引天然只放行一个请求。
      *
+     * <p>唯一键是 (activity_id, user_id, round_no)：同一批活动每 round-minutes 分钟
+     * 再来一轮，带上 round_no 才能让用户下一轮重新有资格抢。
+     *
      * <p>扣库存 rows==0 时抛 {@link SoldOutException} 回滚（连刚插的记录一起回滚，
      * 不会留下「抢不到却占着名额」的脏记录）。
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean reserve(Long activityId, Long userId, LocalDateTime now) {
-        // 1. 先落唯一记录：同一用户并发重复请求，这里只有第一个能插成功，
-        //    其余命中 (activity_id, user_id) 唯一索引抛 DuplicateKeyException
+    public boolean reserve(Long activityId, Long userId, LocalDateTime now, long roundNo) {
+        // 1. 先落唯一记录：同一用户本轮并发重复请求，这里只有第一个能插成功，
+        //    其余命中 (activity_id, user_id, round_no) 唯一索引抛 DuplicateKeyException
         SeckillOrder so = new SeckillOrder();
         so.setActivityId(activityId);
         so.setUserId(userId);
+        so.setRoundNo(roundNo);
         so.setCreateTime(now);
         seckillOrderMapper.insert(so);
 
@@ -59,10 +63,11 @@ public class SeckillStockService {
 
     /** 建单失败补偿：回补秒杀库存 + 删唯一记录，让用户能重试。 */
     @Transactional(rollbackFor = Exception.class)
-    public void compensate(Long activityId, Long userId) {
+    public void compensate(Long activityId, Long userId, long roundNo) {
         seckillOrderMapper.delete(Wrappers.<SeckillOrder>lambdaQuery()
                 .eq(SeckillOrder::getActivityId, activityId)
-                .eq(SeckillOrder::getUserId, userId));
+                .eq(SeckillOrder::getUserId, userId)
+                .eq(SeckillOrder::getRoundNo, roundNo));
         activityMapper.restoreSeckillStock(activityId);
     }
 

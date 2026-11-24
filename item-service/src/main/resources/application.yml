@@ -45,3 +45,9 @@ hmall:
   remote:
     # 秒杀抢购成功后回调 order-service 建普通订单
     order-url: http://localhost:8083
+  seckill:
+    # 场次轮转：每 round-minutes 分钟换一组商品，共 group-count 组循环。
+    # 场次是按当前时间实时算的，不落库，所以服务放多久再开都永远有进行中的场次。
+    # 演示用 10 分钟（能亲眼看到切场）；真实业务一般 120 分钟一场。
+    round-minutes: 10
+    group-count: 3
