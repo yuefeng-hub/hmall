@@ -339,15 +339,20 @@ const fill = (id, val) => `(function(){ var el=document.getElementById('${id}');
 
   await cdp.eval(`(function(){ document.getElementById('modalOk').click(); return 1; })()`);
   await sleep(3000);
-  s = await cdp.eval(`({
-    text: ((document.querySelector('#orderList .order-card') || {}).innerText || '').replace(/\\s+/g, ' '),
-    hasPay: !!document.querySelector('#orderList button[data-pay]'),
-    hasCancel: !!document.querySelector('#orderList button[data-cancel]'),
-    stock: (function(){
-      var card = document.querySelector('button[data-add="1"]').closest('.gd-card');
-      return (card.querySelector('.gd-price em') || {}).textContent || '';
-    })()
-  })`);
+  // 只看刚取消的那一张（订单按 id 倒序，它排第一）。整页找 button[data-pay]
+  // 会把历史上别的待支付订单也算进来 —— 那些本来就应该带「去支付」，不是缺陷
+  s = await cdp.eval(`(function(){
+    var c = document.querySelector('#orderList .order-card');
+    return {
+      text: c ? c.innerText.replace(/\\s+/g, ' ') : '',
+      hasPay: c ? !!c.querySelector('button[data-pay]') : false,
+      hasCancel: c ? !!c.querySelector('button[data-cancel]') : false,
+      stock: (function(){
+        var card = document.querySelector('button[data-add="1"]').closest('.gd-card');
+        return (card.querySelector('.gd-price em') || {}).textContent || '';
+      })()
+    };
+  })()`);
   check('订单状态变为「已取消」', /已取消/.test(s.text), '');
   check('已取消订单不再显示支付/取消按钮', !s.hasPay && !s.hasCancel, '');
   check('商品库存已回补', s.stock === stockBefore, stockBefore + ' -> ' + s.stock);
@@ -428,7 +433,8 @@ const fill = (id, val) => `(function(){ var el=document.getElementById('${id}');
     regVisible: !document.getElementById('regForm').classList.contains('hidden'),
     title: (document.getElementById('authTitle') || {}).textContent || ''
   })`);
-  check('切到注册 tab', s.regVisible && /注册/.test(s.title), s.title);
+  // 标题文案在重写登录页时改成了「创建账号」，已不含「注册」二字
+  check('切到注册 tab', s.regVisible && /注册|创建账号/.test(s.title), s.title);
 
   await cdp.eval(fill('regUser', regUser));
   await cdp.eval(fill('regEmail', regEmail));
@@ -532,7 +538,8 @@ const fill = (id, val) => `(function(){ var el=document.getElementById('${id}');
   check('规格参数表无空值',
     s.specs.length === 6 && s.specs.every(function(v){ return v && v !== '--'; }),
     s.specs.slice(0, 3).join(' | '));
-  check('同类推荐 6 件（同分类且排除自己）', s.similar === 6, s.similar + ' 件');
+  // 取 5 件是为了正好铺满一行 5 列网格（6 件会剩一件孤零零占第二行）
+  check('同类推荐 5 件（同分类且排除自己）', s.similar === 5, s.similar + ' 件');
   check('详情页无破图', s.brokenImgs === 0, s.brokenImgs + ' 张失败');
   check('面包屑带分类与商品名', /手机通讯/.test(s.crumb) && /小米 14 Pro/.test(s.crumb),
     s.crumb.slice(0, 42));
