@@ -6,114 +6,194 @@
 <title>登录 / 注册 · 黑马商城</title>
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="auth-body">
 
-<div class="auth-wrap">
-  <!-- 左侧品牌区 -->
-  <aside class="auth-brand">
-    <div class="logo">黑 马 商 城</div>
-    <h1>正品好物<br>新人注册立减 500 元</h1>
-    <p>邮箱验证码一键注册，注册完直接下单</p>
-    <ul>
-      <li>商品服务 8081 · 48 件好物六大品类</li>
-      <li>购物车服务 8082 · 随手加购</li>
-      <li>订单服务 8083 · 下单扣库存、超时自动取消</li>
-      <li>支付服务 8084 · 余额支付与幂等补偿</li>
-      <li>用户服务 8085 · 邮箱验证码注册登录</li>
-    </ul>
-  </aside>
+<main class="auth-screen">
+  <!-- 背景三层（层次靠 z-index 负值，卡片永远在最上面）：
+       .auth-photo 静图兜底（视频没加载出来 / 尊重省流量设置时看到的就是它）
+       .video-stack 四段场景视频，login.js 每 8 秒交叉淡入淡出
+       .auth-shade 压暗蒙版，保证前半屏文字和卡片可读 -->
+  <div class="auth-photo" aria-hidden="true"></div>
+  <div class="video-stack" id="videoStack" aria-hidden="true">
+    <video class="hero-video active" src="videos/golden-hour.mp4" muted loop playsinline
+           preload="auto" tabindex="-1"></video>
+    <video class="hero-video" src="videos/still-water.mp4" muted loop playsinline
+           preload="metadata" tabindex="-1"></video>
+    <video class="hero-video" src="videos/deep-woods.mp4" muted loop playsinline
+           preload="metadata" tabindex="-1"></video>
+    <video class="hero-video" src="videos/quiet-dawn.mp4" muted loop playsinline
+           preload="metadata" tabindex="-1"></video>
+  </div>
+  <div class="auth-shade" aria-hidden="true"></div>
 
-  <!-- 右侧表单 -->
-  <section class="auth-panel">
-    <div class="auth-card">
-      <h2 id="authTitle">欢迎登录</h2>
-      <p class="auth-sub" id="authSub">登录后即可下单、查看余额、在线充值</p>
+  <header class="auth-top">
+    <span class="wordmark">黑马商店</span>
+    <span class="auth-badge">48 件好物 · 六大品类</span>
+  </header>
 
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab active" data-tab="pwd">密码登录</button>
-        <button type="button" class="auth-tab" data-tab="email">邮箱验证码</button>
-        <button type="button" class="auth-tab" data-tab="reg">免费注册</button>
+  <div class="auth-main">
+    <!-- 左栏：商品与福利介绍，宽屏才显示（窄屏只留标题 + 一行福利） -->
+    <section class="auth-hero">
+      <h2 class="hero-title">好物不必等<br>一站就购齐</h2>
+      <p class="hero-lead">
+        手机通讯、电脑办公、家用电器、影音娱乐、智能穿戴、数码配件 ——
+        48 件精选商品，正品行货、余额支付、当天发货。
+      </p>
+      <ul class="hero-points">
+        <li>
+          <b>新人立减 500 元</b>
+          <span>注册即送 500 元礼金，下单直接抵扣，不用凑单</span>
+        </li>
+        <li>
+          <b>邮箱验证码登录</b>
+          <span>不用记密码，6 位验证码 5 分钟内有效，登录更省事</span>
+        </li>
+        <li>
+          <b>购物全流程闭环</b>
+          <span>浏览 · 加购 · 下单 · 支付 · 订单跟踪，一次走通</span>
+        </li>
+      </ul>
+      <div class="hero-cta">
+        <button type="button" class="hero-btn" data-jump="reg">免费注册 · 领 500 元</button>
+        <span class="hero-note">已有账号，右侧直接登录</span>
+      </div>
+    </section>
+
+    <section class="auth-card liquid-glass">
+    <div class="auth-symbol" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+    </div>
+    <div class="auth-eyebrow">BLACK HORSE MALL · 正品好物</div>
+    <h1 id="authTitle">欢迎回来</h1>
+    <p class="auth-subtitle" id="authSub">登录后即可下单、查看余额、在线充值</p>
+
+    <!-- 三种方式：密码 / 邮箱验证码 / 注册。class 与 data-tab 是 login.js 与 E2E 的契约 -->
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="auth-tab active" data-tab="pwd" role="tab">密码登录</button>
+      <button type="button" class="auth-tab" data-tab="email" role="tab">验证码登录</button>
+      <button type="button" class="auth-tab" data-tab="reg" role="tab">注册</button>
+    </div>
+
+    <!-- ========== 密码登录 ========== -->
+    <form id="pwdForm" class="auth-form" autocomplete="off">
+      <label for="username">用户名或邮箱</label>
+      <input id="username" name="username" type="text" autocomplete="username"
+             autocapitalize="none" spellcheck="false" maxlength="64"
+             placeholder="zhangsan@hmall.com">
+
+      <label for="password">密码</label>
+      <div class="auth-input-wrap">
+        <input id="password" name="password" type="password" autocomplete="current-password"
+               maxlength="32" placeholder="请输入密码">
+        <button type="button" class="pwd-toggle" id="pwdToggle">显示</button>
       </div>
 
-      <!-- ========== 密码登录 ========== -->
-      <form id="pwdForm" class="auth-form" autocomplete="off">
-        <div class="field">
-          <label for="username">用户名 / 邮箱</label>
-          <input id="username" name="username" type="text" placeholder="请输入用户名或注册邮箱" autocomplete="username">
-        </div>
-        <div class="field">
-          <label for="password">密码</label>
-          <div class="pwd-field">
-            <input id="password" name="password" type="password" placeholder="请输入密码" autocomplete="current-password">
-            <button type="button" class="pwd-toggle" id="pwdToggle">显示</button>
-          </div>
-        </div>
-        <div class="auth-row">
-          <label class="chk"><input type="checkbox" id="remember" checked> 记住用户名</label>
-          <span class="link-muted">忘记密码请联系管理员</span>
-        </div>
-        <button type="submit" class="btn primary block" id="loginBtn">登 录</button>
-      </form>
+      <div class="auth-row">
+        <label class="chk"><input type="checkbox" id="remember" checked> 记住用户名</label>
+        <span class="link-muted">忘记密码请联系管理员</span>
+      </div>
 
-      <!-- ========== 邮箱验证码登录 ========== -->
-      <form id="emailForm" class="auth-form hidden" autocomplete="off">
-        <div class="field">
-          <label for="emailLogin">邮箱</label>
-          <input id="emailLogin" type="email" placeholder="注册时绑定的邮箱，如 zhangsan@hmall.com">
-        </div>
-        <div class="field">
-          <label for="emailCode">验证码</label>
-          <div class="code-row">
-            <input id="emailCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
-            <button type="button" class="code-btn" id="sendLoginCode">获取验证码</button>
-          </div>
-        </div>
-        <div class="form-tip hidden" id="emailTip"></div>
-        <button type="submit" class="btn primary block" id="emailLoginBtn">登 录</button>
-        <div class="hint">邮箱需先注册。还没账号？切到「免费注册」花 30 秒开一个。</div>
-      </form>
+      <button type="submit" class="auth-submit" id="loginBtn">
+        <span class="btn-label">登录</span>
+        <svg class="btn-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+             stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 17 17 7"/><path d="M7 7h10v10"/>
+        </svg>
+      </button>
+    </form>
 
-      <!-- ========== 注册 ========== -->
-      <form id="regForm" class="auth-form hidden" autocomplete="off">
-        <div class="field">
-          <label for="regUser">用户名</label>
-          <input id="regUser" type="text" placeholder="3-20 位，支持中文 / 字母 / 数字 / 下划线">
-        </div>
-        <div class="field">
-          <label for="regEmail">邮箱</label>
-          <div class="code-row">
-            <input id="regEmail" type="email" placeholder="用于接收验证码">
-            <button type="button" class="code-btn" id="sendRegCode">获取验证码</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="regCode">验证码</label>
-          <input id="regCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
-        </div>
-        <div class="field">
-          <label for="regPwd">密码</label>
-          <input id="regPwd" type="password" placeholder="6-32 位，登录和支付都用它">
-        </div>
-        <div class="field">
-          <label for="regPwd2">确认密码</label>
-          <input id="regPwd2" type="password" placeholder="再输入一次">
-        </div>
-        <div class="form-tip hidden" id="regTip"></div>
-        <button type="submit" class="btn primary block" id="regBtn">注册并登录</button>
-        <div class="hint">注册即送 <b>500 元</b> 新人礼金，可直接下单体验完整链路</div>
-      </form>
+    <!-- ========== 邮箱验证码登录 ========== -->
+    <form id="emailForm" class="auth-form hidden" autocomplete="off">
+      <label for="emailLogin">邮箱地址</label>
+      <input id="emailLogin" type="email" autocomplete="email" maxlength="254"
+             placeholder="注册时绑定的邮箱">
 
-      <div class="demo-accounts" id="demoBox">
-        <div class="demo-title">演示账号（点击自动填入，密码均为 123456）</div>
-        <div class="demo-chips">
-          <button type="button" class="chip" data-user="zhangsan" data-pwd="123456">zhangsan · 余额 5000</button>
-          <button type="button" class="chip" data-user="lisi" data-pwd="123456">lisi · 余额 3000</button>
-          <button type="button" class="chip" data-user="wangwu" data-pwd="123456">wangwu · 余额 1000</button>
-        </div>
+      <label for="emailCode">邮箱验证码</label>
+      <div class="code-field">
+        <input id="emailCode" type="text" inputmode="numeric" maxlength="6"
+               autocomplete="one-time-code" placeholder="000000">
+        <button type="button" class="code-btn" id="sendLoginCode">获取验证码</button>
+      </div>
+
+      <div class="form-tip hidden" id="emailTip"></div>
+
+      <button type="submit" class="auth-submit" id="emailLoginBtn">
+        <span class="btn-label">登录</span>
+        <svg class="btn-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+             stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 17 17 7"/><path d="M7 7h10v10"/>
+        </svg>
+      </button>
+      <div class="auth-hint">邮箱需先注册。演示账号 zhangsan@hmall.com 可直接收码登录。</div>
+    </form>
+
+    <!-- ========== 注册 ========== -->
+    <form id="regForm" class="auth-form hidden" autocomplete="off">
+      <label for="regUser">用户名</label>
+      <input id="regUser" type="text" autocomplete="username" maxlength="20"
+             placeholder="3-20 位，中文 / 字母 / 数字 / 下划线">
+
+      <label for="regEmail">邮箱地址</label>
+      <div class="code-field">
+        <input id="regEmail" type="email" autocomplete="email" maxlength="254"
+               placeholder="用于接收验证码">
+        <button type="button" class="code-btn" id="sendRegCode">获取验证码</button>
+      </div>
+
+      <label for="regCode">邮箱验证码</label>
+      <input id="regCode" type="text" inputmode="numeric" maxlength="6"
+             autocomplete="one-time-code" placeholder="000000">
+
+      <label for="regPwd">密码</label>
+      <input id="regPwd" type="password" autocomplete="new-password" maxlength="32"
+             placeholder="6-32 位，登录和支付都用它">
+
+      <label for="regPwd2">确认密码</label>
+      <input id="regPwd2" type="password" autocomplete="new-password" maxlength="32"
+             placeholder="再输入一次">
+
+      <div class="form-tip hidden" id="regTip"></div>
+
+      <button type="submit" class="auth-submit" id="regBtn">
+        <span class="btn-label">注册并登录</span>
+        <svg class="btn-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+             stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 17 17 7"/><path d="M7 7h10v10"/>
+        </svg>
+      </button>
+      <div class="auth-hint">注册即送 <b>500 元</b> 新人礼金，可直接下单体验完整链路。</div>
+    </form>
+
+    <div class="demo-accounts" id="demoBox">
+      <div class="demo-title">演示账号 · 点击自动填入（密码均为 123456）</div>
+      <div class="demo-chips">
+        <button type="button" class="chip" data-user="zhangsan" data-pwd="123456">zhangsan · 余额5000</button>
+        <button type="button" class="chip" data-user="lisi" data-pwd="123456">lisi · 余额3000</button>
+        <button type="button" class="chip" data-user="wangwu" data-pwd="123456">wangwu · 余额1000</button>
       </div>
     </div>
   </section>
-</div>
+  </div>
+
+  <footer class="auth-footer">
+    <span>正品保障 · 邮箱验证 · 余额支付 · 新人立减 500 元</span>
+    <button type="button" class="auth-motion" id="motionBtn"
+            aria-label="暂停背景视频" title="暂停背景视频">
+      <svg class="ic-pause" viewBox="0 0 24 24" width="15" height="15" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M9 5v14"/><path d="M15 5v14"/>
+      </svg>
+      <svg class="ic-play hidden" viewBox="0 0 24 24" width="15" height="15" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 4.5v15l12-7.5z"/>
+      </svg>
+    </button>
+  </footer>
+</main>
 
 <div id="toast" class="toast hidden"></div>
 

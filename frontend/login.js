@@ -4,6 +4,12 @@
 
   const $ = function (id) { return document.getElementById(id); };
 
+  /** 按钮文字只换 .btn-label，别把右侧的箭头图标一起 textContent 掉 */
+  function setBtnText(btn, text) {
+    const label = btn.querySelector('.btn-label');
+    if (label) label.textContent = text; else btn.textContent = text;
+  }
+
   /** 登录成功后要去的页面 */
   function targetPage() {
     const from = new URLSearchParams(location.search).get('from');
@@ -19,13 +25,85 @@
     return;
   }
 
+  // ==================== 背景：四段场景视频轮播 ====================
+  // 层次 .auth-photo 静图兜底 → .video-stack 视频 → .auth-shade 蒙版，
+  // 视频没就绪时看到的就是静图，不会闪黑。坏掉的那段自动剔除，不卡在空帧上。
+  (function backdrop() {
+    const stack = $('videoStack');
+    if (!stack) return;
+    const videos = Array.prototype.slice.call(stack.querySelectorAll('video'));
+    if (!videos.length) return;
+
+    const SWITCH_MS = 8000;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const motionBtn = $('motionBtn');
+    const broken = [];
+    let playing = !reduce.matches;   // 系统开了「减少动态效果」就默认静止
+    let active = 0;
+    let timer = null;
+
+    function usable() {
+      const list = [];
+      videos.forEach(function (v, i) { if (broken.indexOf(i) < 0) list.push(i); });
+      return list.length ? list : [0];
+    }
+    function show(index) {
+      active = index;
+      videos.forEach(function (v, i) { v.classList.toggle('active', i === index); });
+    }
+    function next() {
+      const list = usable();
+      show(list[(list.indexOf(active) + 1) % list.length]);
+    }
+    function start() {
+      stop();
+      timer = setInterval(next, SWITCH_MS);
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    function sync() {
+      if (playing) {
+        videos.forEach(function (v) {
+          const p = v.play();
+          if (p && p.catch) p.catch(function () {});
+        });
+        start();
+      } else {
+        videos.forEach(function (v) { v.pause(); });
+        stop();
+      }
+      if (!motionBtn) return;
+      motionBtn.setAttribute('aria-label', playing ? '暂停背景视频' : '播放背景视频');
+      motionBtn.title = playing ? '暂停背景视频' : '播放背景视频';
+      motionBtn.querySelector('.ic-play').classList.toggle('hidden', playing);
+      motionBtn.querySelector('.ic-pause').classList.toggle('hidden', !playing);
+    }
+
+    videos.forEach(function (v, i) {
+      v.addEventListener('error', function () {
+        if (broken.indexOf(i) < 0) broken.push(i);
+        v.style.display = 'none';
+        if (i === active) show(usable()[0]);
+      });
+    });
+    if (motionBtn) {
+      motionBtn.addEventListener('click', function () { playing = !playing; sync(); });
+    }
+    const onReduce = function (e) { playing = !e.matches; sync(); };
+    if (reduce.addEventListener) reduce.addEventListener('change', onReduce);
+    else if (reduce.addListener) reduce.addListener(onReduce);
+
+    show(0);
+    sync();
+  })();
+
   // ==================== tab 切换 ====================
   const tabs = document.querySelectorAll('.auth-tab');
   const forms = { pwd: $('pwdForm'), email: $('emailForm'), reg: $('regForm') };
   const TITLES = {
-    pwd: ['欢迎登录', '登录后即可下单、查看余额、在线充值'],
+    pwd: ['欢迎回来', '登录后即可下单、查看余额、在线充值'],
     email: ['邮箱验证码登录', '用注册邮箱收 6 位验证码，免密码登录'],
-    reg: ['注册新账号', '花 30 秒注册，立得 500 元新人礼金']
+    reg: ['创建账号', '花 30 秒注册，立得 500 元新人礼金']
   };
 
   function switchTab(key) {
@@ -36,6 +114,17 @@
     $('demoBox').classList.toggle('hidden', key === 'reg');
   }
   tabs.forEach(t => t.addEventListener('click', function () { switchTab(t.dataset.tab); }));
+
+  // 左栏「免费注册领 500 元」：切到注册 tab 并把光标落到第一个输入框
+  document.querySelectorAll('[data-jump]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.dataset.jump;
+      if (!forms[key]) return;
+      switchTab(key);
+      const first = forms[key].querySelector('input');
+      if (first) first.focus();
+    });
+  });
 
   // 用 ?tab=reg 直接打开注册页
   const qTab = new URLSearchParams(location.search).get('tab');
@@ -81,7 +170,7 @@
     submitting = true;
     const btn = $('loginBtn');
     btn.disabled = true;
-    btn.textContent = '登录中…';
+    setBtnText(btn, '登录中…');
 
     try {
       const res = await Hmall.api(Hmall.API.user, '/users/login', {
@@ -96,7 +185,7 @@
     } finally {
       submitting = false;
       btn.disabled = false;
-      btn.textContent = '登 录';
+      setBtnText(btn, '登录');
     }
   });
 
@@ -163,7 +252,7 @@
 
     const btn = $('emailLoginBtn');
     btn.disabled = true;
-    btn.textContent = '登录中…';
+    setBtnText(btn, '登录中…');
     try {
       const res = await Hmall.api(Hmall.API.user, '/users/email/login', {
         body: { email: email, code: code },
@@ -174,7 +263,7 @@
     } catch (err) {
       Hmall.toast(err.status ? (err.message || '登录失败') : '连不上用户服务，请确认 8085 端口已启动', 'error');
       btn.disabled = false;
-      btn.textContent = '登 录';
+      setBtnText(btn, '登录');
     }
   });
 
@@ -196,7 +285,7 @@
 
     const btn = $('regBtn');
     btn.disabled = true;
-    btn.textContent = '注册中…';
+    setBtnText(btn, '注册中…');
     try {
       const res = await Hmall.api(Hmall.API.user, '/users/register', {
         body: { username: username, password: pwd, email: email, code: code },
@@ -208,7 +297,7 @@
     } catch (err) {
       Hmall.toast(err.status ? (err.message || '注册失败') : '连不上用户服务，请确认 8085 端口已启动', 'error');
       btn.disabled = false;
-      btn.textContent = '注册并登录';
+      setBtnText(btn, '注册并登录');
     }
   });
 
