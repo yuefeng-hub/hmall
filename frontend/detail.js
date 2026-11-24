@@ -131,9 +131,10 @@
     const tip = $('similarTip');
     try {
       const qs = '?limit=8' + (item.category ? '&category=' + encodeURIComponent(item.category) : '');
+      // 取 5 件正好铺满一行 5 列网格；取 6 件会剩一件孤零零占第二行
       const list = (await Hmall.api(API.item, '/items/search' + qs))
         .filter(function (p) { return p.id !== item.id; })
-        .slice(0, 6);
+        .slice(0, 5);
       if (!list.length) {
         grid.innerHTML = '<div class="empty">同类商品还不够多，回首页看看吧</div>';
         tip.textContent = '';
