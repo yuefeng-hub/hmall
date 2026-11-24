@@ -1509,3 +1509,223 @@ body::after {
   .cart-item { flex-wrap: wrap; }
   .tb-hi, .tb-accent { display: none; }
 }
+
+/* ============================================================
+   智能客服「小马」  （2026-11-24）
+   悬浮按钮 + 玻璃质感对话面板
+   选择器统一 kefu- / kf- 前缀，与商城原有样式不冲突，
+   所以可以整体放在文件末尾（本节的 @media 也在本节内）
+   ============================================================ */
+.kefu-fab {
+  position: fixed; right: 26px; bottom: 26px; z-index: 60;
+  width: 58px; height: 58px; border: 0; border-radius: 50%;
+  background: linear-gradient(145deg, #ff5a3c, var(--red) 62%, var(--red-dark));
+  color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 26px rgba(225, 37, 27, .38), 0 0 0 1px rgba(255, 255, 255, .35) inset;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.kefu-fab svg { width: 30px; height: 30px; }
+.kefu-fab::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid rgba(225, 37, 27, .35);
+  animation: kefuPulse 2.6s ease-out infinite;
+}
+.kefu-fab:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 14px 32px rgba(225, 37, 27, .46); }
+.kefu-fab.on::after { display: none; }
+@keyframes kefuPulse {
+  0% { transform: scale(.86); opacity: .85; }
+  70% { transform: scale(1.18); opacity: 0; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+.kefu-badge {
+  position: absolute; top: -3px; right: -3px; min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: 10px; background: #fff; color: var(--red); font-size: 11px; font-style: normal;
+  font-weight: 700; line-height: 19px; text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .18);
+}
+.kefu-tip {
+  position: fixed; right: 92px; bottom: 40px; z-index: 60;
+  background: #fff; color: var(--ink); font-size: 13px; padding: 8px 12px; border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(23, 33, 61, .16), 0 0 0 1px rgba(23, 33, 61, .06);
+  animation: kefuTipIn .3s ease;
+}
+.kefu-tip::after {
+  content: ""; position: absolute; right: -5px; top: 50%; margin-top: -5px;
+  width: 10px; height: 10px; background: #fff; transform: rotate(45deg);
+  box-shadow: 1px -1px 0 rgba(23, 33, 61, .06);
+}
+@keyframes kefuTipIn { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
+
+.kefu-panel {
+  position: fixed; right: 26px; bottom: 98px; z-index: 65;
+  width: 384px; height: min(626px, calc(100vh - 130px));
+  display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .9);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+  box-shadow: 0 26px 64px rgba(23, 33, 61, .22), 0 0 0 1px rgba(23, 33, 61, .07);
+  animation: kefuIn .22s ease;
+}
+@keyframes kefuIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.kefu-head {
+  display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+  background: linear-gradient(120deg, var(--red-dark), #f04b32 55%, #ff7549);
+  color: #fff; flex: 0 0 auto;
+}
+.kefu-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex: 0 0 auto;
+  background: rgba(255, 255, 255, .22); display: flex; align-items: center; justify-content: center;
+  font-size: 17px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35) inset;
+}
+.kefu-id { flex: 1; min-width: 0; }
+.kefu-id b { display: block; font-size: 15px; font-weight: 700; letter-spacing: .3px; }
+.kefu-id i { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-style: normal; opacity: .9; }
+.kefu-dot { width: 6px; height: 6px; border-radius: 50%; background: #7dffa8; box-shadow: 0 0 6px #7dffa8; }
+.kefu-close {
+  width: 28px; height: 28px; border: 0; border-radius: 8px; cursor: pointer;
+  background: rgba(255, 255, 255, .16); color: #fff; font-size: 18px; line-height: 1;
+}
+.kefu-close:hover { background: rgba(255, 255, 255, .3); }
+
+.kefu-body {
+  flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain;
+  padding: 14px 12px 6px; display: flex; flex-direction: column; gap: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(244, 246, 249, .5));
+  scrollbar-width: thin;
+}
+.kefu-body::-webkit-scrollbar { width: 6px; }
+.kefu-body::-webkit-scrollbar-thumb { background: rgba(23, 33, 61, .16); border-radius: 3px; }
+
+.kf-msg { display: flex; gap: 8px; align-items: flex-start; }
+.kf-msg.me { flex-direction: row-reverse; }
+.kf-ava {
+  width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; box-shadow: 0 2px 8px rgba(23, 33, 61, .12), 0 0 0 1px rgba(23, 33, 61, .05);
+}
+.kf-wrap { max-width: 84%; display: flex; flex-direction: column; gap: 4px; }
+.kf-msg.me .kf-wrap { align-items: flex-end; }
+.kf-bubble {
+  padding: 9px 12px; border-radius: 13px; font-size: 13.5px; line-height: 1.62;
+  background: #fff; color: var(--ink); word-break: break-word;
+  box-shadow: 0 3px 10px rgba(23, 33, 61, .07), 0 0 0 1px rgba(23, 33, 61, .05);
+  border-top-left-radius: 5px;
+}
+.kf-msg.me .kf-bubble {
+  background: linear-gradient(140deg, #ff6a4d, var(--red));
+  color: #fff; border-top-left-radius: 13px; border-top-right-radius: 5px;
+  box-shadow: 0 4px 14px rgba(225, 37, 27, .28);
+}
+.kf-bubble b { color: inherit; font-weight: 700; }
+.kf-msg.bot .kf-bubble b { color: var(--red-dark); }
+.kf-dim { color: var(--ink-3); font-size: 12.5px; }
+.kf-time { font-size: 10.5px; color: #a8adb7; padding: 0 3px; }
+
+.kf-typing { display: inline-flex; gap: 4px; padding: 2px 0; }
+.kf-typing i {
+  width: 6px; height: 6px; border-radius: 50%; background: #c0c5cd;
+  animation: kfTyping 1.1s ease-in-out infinite;
+}
+.kf-typing i:nth-child(2) { animation-delay: .16s; }
+.kf-typing i:nth-child(3) { animation-delay: .32s; }
+@keyframes kfTyping {
+  0%, 60%, 100% { transform: translateY(0); opacity: .55; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ---- 对话里的卡片 ---- */
+.kf-card {
+  margin-top: 8px; padding: 10px; border-radius: 12px; background: #fff;
+  box-shadow: 0 2px 10px rgba(23, 33, 61, .07), 0 0 0 1px rgba(23, 33, 61, .06);
+}
+.kf-card:first-child { margin-top: 6px; }
+.kf-card-top { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.kf-card-top b { font-weight: 700; }
+.kf-st { font-size: 11.5px; padding: 1px 8px; border-radius: 20px; }
+.kf-st.s1 { color: #b26a00; background: #fff4e0; }
+.kf-st.s2 { color: #0a7a44; background: #e6f7ee; }
+.kf-st.s3 { color: var(--ink-3); background: #f0f1f4; }
+.kf-card-sub { margin-top: 5px; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+.kf-card-foot {
+  margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.kf-card-foot > b { color: var(--red); font-size: 15px; }
+.kf-card-btns { display: flex; gap: 6px; }
+.kf-bt {
+  border: 0; cursor: pointer; border-radius: 8px; padding: 5px 11px; font-size: 12px;
+  background: #f2f3f6; color: var(--ink-2);
+  box-shadow: 0 0 0 1px rgba(23, 33, 61, .06);
+  transition: background .15s ease, color .15s ease;
+}
+.kf-bt:hover { background: #e9ebf0; color: var(--ink); }
+.kf-bt.primary { background: linear-gradient(140deg, #ff6a4d, var(--red)); color: #fff; box-shadow: 0 3px 10px rgba(225, 37, 27, .28); }
+.kf-bt.primary:hover { filter: brightness(1.05); }
+.kf-bt[disabled] { opacity: .55; cursor: not-allowed; }
+
+.kf-item { display: flex; gap: 10px; align-items: flex-start; }
+.kf-item > img {
+  width: 58px; height: 58px; border-radius: 9px; object-fit: cover; flex: 0 0 auto;
+  background: #f5f6f8; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(23, 33, 61, .06);
+}
+.kf-item-info { flex: 1; min-width: 0; }
+.kf-item-name {
+  font-size: 13px; line-height: 1.45; color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.kf-item-meta { margin-top: 3px; display: flex; align-items: baseline; gap: 8px; }
+.kf-item-meta b { color: var(--red); font-size: 15px; }
+.kf-item-meta span { font-size: 11.5px; color: var(--ink-3); }
+.kf-item .kf-card-btns { margin-top: 7px; }
+
+/* ---- 快捷问题 ---- */
+.kefu-chips {
+  flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0;
+}
+.kefu-chips:empty { display: none; }
+.kf-chip {
+  flex: 0 0 auto; border: 0; cursor: pointer; border-radius: 20px; padding: 6px 12px;
+  font-size: 12.5px; color: var(--red-dark); background: rgba(225, 37, 27, .08);
+  box-shadow: 0 0 0 1px rgba(225, 37, 27, .16);
+  transition: background .15s ease;
+}
+.kf-chip:hover { background: rgba(225, 37, 27, .15); }
+
+/* ---- 输入区 ---- */
+.kefu-input {
+  flex: 0 0 auto; display: flex; gap: 8px; align-items: center;
+  padding: 10px 12px 12px;
+  background: rgba(255, 255, 255, .72);
+  border-top: 1px solid rgba(23, 33, 61, .06);
+}
+.kefu-input input {
+  flex: 1; min-width: 0; height: 38px; padding: 0 14px; font-size: 13.5px;
+  border: 1px solid rgba(23, 33, 61, .1); border-radius: 20px; background: #fff;
+  color: var(--ink); outline: none; transition: border-color .15s ease, box-shadow .15s ease;
+}
+.kefu-input input::placeholder { color: #a8adb7; }
+.kefu-input input:focus { border-color: rgba(225, 37, 27, .5); box-shadow: 0 0 0 3px rgba(225, 37, 27, .1); }
+.kefu-send {
+  width: 38px; height: 38px; flex: 0 0 auto; border: 0; border-radius: 50%; cursor: pointer;
+  background: linear-gradient(140deg, #ff6a4d, var(--red)); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(225, 37, 27, .3);
+}
+.kefu-send svg { width: 18px; height: 18px; }
+.kefu-send:hover { filter: brightness(1.06); }
+
+@media (max-width: 760px) {
+  .kefu-fab { right: 16px; bottom: 18px; width: 52px; height: 52px; }
+  .kefu-fab svg { width: 26px; height: 26px; }
+  .kefu-panel {
+    right: 0; bottom: 0; left: 0; top: 0; width: auto;
+    height: 100%; max-height: none; border-radius: 0;
+    /* 全屏时背后就是商品页，模糊透过来的色块太花，这里几乎做实底 */
+    background: rgba(255, 255, 255, .96);
+  }
+  .kefu-body { background: linear-gradient(180deg, #fff, #f7f8fa); }
+  .kefu-tip { display: none; }
+  .kf-wrap { max-width: 88%; }
+}
